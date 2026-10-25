@@ -1,0 +1,32 @@
+# docker compose up --build, then open http://localhost:3000
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vv
+      POSTGRES_PASSWORD: vv
+      POSTGRES_DB: vereinsvote
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U vv -d vereinsvote']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgres://vv:vv@db:5432/vereinsvote
+      APP_URL: http://localhost:3000
+      APP_SECRET: local-docker-secret-change-me-0123456789
+      SEED_DEMO_DATA: 'true'
+      TRUST_PROXY_HOPS: '0'
+
+volumes:
+  pgdata:

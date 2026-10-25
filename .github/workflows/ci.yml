@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vv
+          POSTGRES_PASSWORD: vv
+          POSTGRES_DB: vereinsvote_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U vv -d vereinsvote_test"
+          --health-interval 2s --health-timeout 3s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgres://vv:vv@localhost:5432/vereinsvote_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test -w shared
+      - run: npm run test:coverage -w server
+      - run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t vereinsvote .
+      - name: Start app with Postgres and check it answers
+        run: |
+          docker network create vv
+          docker run -d --name db --network vv -e POSTGRES_USER=vv -e POSTGRES_PASSWORD=vv -e POSTGRES_DB=vereinsvote postgres:16-alpine
+          sleep 5
+          docker run -d --name app --network vv -p 3000:3000 \
+            -e DATABASE_URL=postgres://vv:vv@db:5432/vereinsvote \
+            -e APP_SECRET=ci-secret-0123456789abcdef -e APP_URL=http://localhost:3000 -e SEED_DEMO_DATA=true \
+            vereinsvote
+          for i in $(seq 1 30); do curl -sf localhost:3000/api/health && break; sleep 1; done
+          curl -sf localhost:3000/api/competitions | grep -q vereinspreis-lausitz-2026
+          curl -sf localhost:3000/ | grep -q '<div id="root">'
+          docker logs app
