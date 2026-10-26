@@ -4,7 +4,7 @@ Crowdvoting for regional funding competitions. A company puts up a budget, local
 
 The interface is in German, because the users are German clubs and residents. Code and docs are in English.
 
-Live demo: _add URL after deploying_
+Live demo: (https://vereinsvote.onrender.com/)
 
 Demo logins (password `demo1234`): `sponsor@demo.vereinsvote.de` and `tsv@demo.vereinsvote.de`. The login page has buttons that fill them in.
 
