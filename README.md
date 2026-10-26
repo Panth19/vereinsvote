@@ -85,24 +85,7 @@ Without an SMTP server the app runs in demo mode: instead of sending the confirm
 
 The demo projects have no photos until you add some: put pictures with the names listed in [server/seed-photos/README.md](server/seed-photos/README.md) into that folder and run `npm run db:seed -- --reset`.
 
-## Tests
 
-```bash
-createdb vereinsvote_test   # once
-npm test
-npm run test:coverage -w server
-```
 
-The API tests use a real Postgres database instead of mocks, because the important parts (unique votes, row locks, transactions) happen in the database. The clock is passed in, so tests can jump between the submission, voting and ended phases.
 
-## Deploying
 
-See [docs/deploy.md](docs/deploy.md). Short version: push to GitHub, create a Blueprint on Render from `render.yaml`, set `APP_URL`.
-
-## Open questions
-
-Things that are product decisions rather than code:
-
-- Should a payout be capped at the project's funding goal? Right now a project can get more than it asked for: in the demo a 3,200 € project currently gets 3,750 €.
-- Is one vote per inbox enough, or do big competitions need SMS verification? Fewer fake votes, but also fewer real ones.
-- Should a club be able to fix a rejected project and submit it again while submissions are open?
